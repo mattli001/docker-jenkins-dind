@@ -3,4 +3,7 @@
 # check to see if there are any registry certificates defined
 registry-certificate
 
+# check to see if there are any files to copy to the rootfs
+copy-rootfs-files
+
 exec "$@"
