@@ -50,6 +50,9 @@ VOLUME /var/lib/docker
 
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# install python tools
+RUN easy_install pip && pip install docker-squash
+
 # copy files onto the filesystem
 COPY files/ /
 RUN chmod +x /docker-entrypoint /usr/local/bin/*
