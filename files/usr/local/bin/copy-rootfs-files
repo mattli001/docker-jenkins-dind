@@ -4,5 +4,5 @@ set -e
 ROOTFS_ROOT="/var/lib/jenkins/rootfs"
 
 if [ -e "${ROOTFS_ROOT}" ]; then
-  rsync -av ${ROOTFS_ROOT} /
+  rsync -av ${ROOTFS_ROOT}/ /
 fi;
