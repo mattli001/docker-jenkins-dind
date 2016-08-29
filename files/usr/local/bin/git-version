@@ -1,0 +1,103 @@
+#!/usr/bin/env python
+"""
+Gets and sets version tags
+"""
+import argparse
+import sh
+import shlex
+
+INITIAL_VERSION = '0.0.0'
+
+MAJOR = 0
+MINOR = 1
+REVISION = 2
+
+
+class VersionError(Exception):
+    pass
+
+
+class GitVersion(object):
+    def __init__(self, args):
+        self.args = args
+
+    @property
+    def version(self):
+        try:
+            command = sh.git(*shlex.split('describe --tags'))
+        except sh.ErrorReturnCode_128:
+            return None
+        else:
+            return command.stdout.decode('utf8').strip()
+
+    def get_next_version(self, version):
+        # split the version and int'ify major, minor, and revision
+        split_version = version.split('-', 1)[0].split('.', 3)
+        for i in range(3):
+            split_version[i] = int(split_version[i])
+
+        if self.args.major:
+            split_version[MAJOR] += 1
+
+            split_version[MINOR] = 0
+            split_version[REVISION] = 0
+        elif self.args.minor:
+            split_version[MINOR] += 1
+
+            split_version[REVISION] = 0
+        elif self.args.revision:
+            split_version[REVISION] += 1
+
+        return split_version[:3]
+
+    def bump(self):
+        version = self.version
+        if version:
+            split_dashes = version.split('-')
+            if len(split_dashes) == 1:
+                raise VersionError('Is version={} already bumped?'.format(version))
+
+            current_version = split_dashes[0]
+        else:
+            current_version = INITIAL_VERSION
+
+        version = self.get_next_version(current_version)
+
+        return version
+
+    def check_bump(self):
+        if not self.args.bump:
+            return False
+
+        return self.bump()
+
+    def run(self):
+        current_version = self.version
+        bumped = self.check_bump()
+
+        if bumped is False:
+            if current_version:
+                print(self.version)
+            else:
+                next_version = self.get_next_version(INITIAL_VERSION)
+                print('No version found, use --bump to set to {}'.format(self.stringify(next_version)))
+        else:
+            version_str = self.stringify(bumped)
+            sh.git('tag', version_str)
+
+            print(version_str)
+
+    def stringify(self, version):
+        return '.'.join([str(x) for x in version])
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--bump', action='store_true')
+    parser.add_argument('--revision', action='store_true', default=True)
+    parser.add_argument('--minor', action='store_true')
+    parser.add_argument('--major', action='store_true')
+
+    args = parser.parse_args()
+
+    git_version = GitVersion(args)
+    git_version.run()
