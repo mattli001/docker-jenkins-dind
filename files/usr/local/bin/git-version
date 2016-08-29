@@ -2,9 +2,12 @@
 """
 Gets and sets version tags
 """
+from __future__ import print_function
+
 import argparse
 import sh
 import shlex
+import sys
 
 INITIAL_VERSION = '0.0.0'
 
@@ -80,12 +83,14 @@ class GitVersion(object):
                 print(self.version)
             else:
                 next_version = self.get_next_version(INITIAL_VERSION)
-                print('No version found, use --bump to set to {}'.format(self.stringify(next_version)))
+                print('No version found, use --bump to set to {}'.format(self.stringify(next_version)), file=sys.stderr)
         else:
             version_str = self.stringify(bumped)
             sh.git('tag', version_str)
 
             print(version_str)
+
+        return 1
 
     def stringify(self, version):
         return '.'.join([str(x) for x in version])
@@ -100,4 +105,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     git_version = GitVersion(args)
-    git_version.run()
+    sys.exit(git_version.run())
