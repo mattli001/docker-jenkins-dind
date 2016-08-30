@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+import argparse
+import os
+import sh
+import tempfile
+
+import yaml
+
+SCRIPT_DIR = os.getcwd()
+VERSION_PLACEHOLDER = '{{ version }}'
+
+
+class DockerManifest(object):
+    def __init__(self, version):
+        self.version = version
+
+    def run(self):
+        manifest_yml = os.path.join(SCRIPT_DIR, 'manifest.yaml')
+        if not os.path.exists(manifest_yml):
+            raise OSError('{} does not exist'.format(manifest_yml))
+
+        with open(manifest_yml, 'r') as fh:
+            content = fh.read()
+
+        content = content.replace(VERSION_PLACEHOLDER, self.version)
+
+        data = yaml.load(content)
+
+        top_image = data['image'].split('/')[0]
+        top_base = data['image'].split(':')[0]
+        for manifest in data['manifests']:
+            _image = manifest['image']
+            if _image.split('/')[0] != top_image:
+                print('pulling {}'.format(_image))
+
+                output = sh.docker('pull', _image)
+
+            _tag = manifest['image'].split(':')[-1]
+            push_image = '{}:{}'.format(top_base, _tag)
+
+            print('tagging {} -> {}'.format(_image, push_image))
+            sh.docker('tag', _image, push_image)
+
+            print('pushing {}'.format(push_image))
+            sh.docker('push', push_image)
+
+            manifest['image'] = push_image
+
+        with tempfile.NamedTemporaryFile('w') as fh:
+            new_content = yaml.dump(data, default_flow_style=False)
+            print(new_content)
+            fh.write(new_content)
+            fh.flush()
+
+            print('pushing manifest')
+            sh.manifest('pushml', fh.name)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('version')
+
+    args = parser.parse_args()
+
+    DockerManifest(args.version).run()
