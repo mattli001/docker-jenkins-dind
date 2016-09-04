@@ -4,7 +4,7 @@ This Jenkins Docker image provides Docker inside itself, which allows you to run
 Run it with mounted directory from host:
 
 ```
-docker run --name jenkins-dind --privileged -d -p 8080:8080 -v /your/path:/var/lib/jenkins killercentury/jenkins-dind
+docker run --name jenkins-dind --privileged -d -p 8080:8080 -v /your/jenkins_data_home:/var/lib/jenkins -v /your/docker_data_home -v /var/run/docker.sock:/var/run/docker.sock mattli001/docker-jenkins-dind
 ```
 
 ## Self-signed private registry
