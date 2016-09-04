@@ -16,6 +16,10 @@ RUN easy_install syslog-stdout supervisor-stdout
 # Install Docker from Docker Inc. repositories.
 RUN curl -sSL https://get.docker.com/ | sh
 
+# 20160903 downgrade to 1.11.2 for compatible with Container Station v1.6.1701
+RUN wget https://get.docker.com/builds/Linux/x86_64/docker-1.11.2.tgz
+RUN tar zxf docker-1.11.2.tgz && cp -a docker/* /usr/bin/
+
 # Install Docker Compose
 ENV DOCKER_COMPOSE_VERSION 1.7.1
 
