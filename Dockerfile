@@ -8,7 +8,8 @@ RUN apt-get update -qq && apt-get install -qqy \
     ca-certificates \
     curl \
     lxc \
-    iptables
+    iptables \
+    python-virtualenv
 
 # Install syslog-stdout
 RUN easy_install syslog-stdout supervisor-stdout
